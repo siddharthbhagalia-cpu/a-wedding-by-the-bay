@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { start as startAudio, resume as resumeAudio } from "../lib/audio";
 
 const ease = [0.22, 1, 0.36, 1];
-const HOLD_MS = 1600; // how long the guest holds to light the diya
+const GROW_MS = 900; // how long the flame takes to catch after the tap
 
 // A brass diya. --p (0 → 1) on the parent controls how much the flame has caught.
 function Diya() {
@@ -65,74 +65,40 @@ function Diya() {
 export default function Veil({ onOpen }) {
     const [open, setOpen] = useState(true);
     const [lit, setLit] = useState(false);
-    const [hint, setHint] = useState(false);
     const rootRef = useRef(null);
     const raf = useRef(0);
-    const prog = useRef(0);
-    const holding = useRef(false);
-    const last = useRef(0);
+    const busy = useRef(false);
 
     useEffect(() => {
         document.documentElement.classList.toggle("locked", open);
     }, [open]);
+    useEffect(() => () => cancelAnimationFrame(raf.current), []);
 
     const paint = (p) => rootRef.current?.style.setProperty("--p", p.toFixed(3));
 
-    // Flame grows while held, and gently dies back if released early.
-    const tick = (t) => {
-        const dt = last.current ? t - last.current : 16;
-        last.current = t;
-        if (lit) return;
-        const dir = holding.current ? 1 : -1.6;
-        prog.current = Math.min(1, Math.max(0, prog.current + (dir * dt) / HOLD_MS));
-        paint(prog.current);
-        if (prog.current >= 1) {
-            light();
-            return;
-        }
-        if (holding.current || prog.current > 0) raf.current = requestAnimationFrame(tick);
-    };
-
-    const light = () => {
-        setLit(true);
-        holding.current = false;
-        navigator.vibrate?.(30);
-        window.dispatchEvent(new Event("wbb:unlock"));
-        // let the glow bloom across the screen, then open
-        setTimeout(() => {
-            setOpen(false);
-            onOpen?.();
-        }, 1500);
-    };
-
-    const press = (e) => {
-        if (lit) return;
+    // One tap: the flame catches and grows on its own, the glow blooms, then the site opens.
+    const begin = () => {
+        if (busy.current) return;
+        busy.current = true;
+        // inside the tap itself, so phones allow sound and the Setting video
         startAudio();
-        // unlock the Setting video inside a real touch, so iPhones let it autoplay later
-        window.dispatchEvent(new Event("wbb:unlock"));
-        holding.current = true;
-        setHint(false);
-        last.current = 0;
-        cancelAnimationFrame(raf.current);
-        raf.current = requestAnimationFrame(tick);
-    };
-
-    const release = () => {
         resumeAudio();
         window.dispatchEvent(new Event("wbb:unlock"));
-        if (lit || !holding.current) return;
-        holding.current = false;
-        if (prog.current < 1) setHint(true);
-    };
-
-    useEffect(() => () => cancelAnimationFrame(raf.current), []);
-
-    const onKey = (e) => {
-        if (e.repeat) return;
-        if (e.key === " " || e.key === "Enter") press(e);
-    };
-    const onKeyUp = (e) => {
-        if (e.key === " " || e.key === "Enter") release();
+        const t0 = performance.now();
+        const grow = (t) => {
+            const k = Math.min(1, (t - t0) / GROW_MS);
+            paint(1 - Math.pow(1 - k, 3));
+            if (k < 1) raf.current = requestAnimationFrame(grow);
+            else {
+                setLit(true);
+                navigator.vibrate?.(25);
+                setTimeout(() => {
+                    setOpen(false);
+                    onOpen?.();
+                }, 1400);
+            }
+        };
+        raf.current = requestAnimationFrame(grow);
     };
 
     return (
@@ -142,6 +108,8 @@ export default function Veil({ onOpen }) {
                     ref={rootRef}
                     className={`veil ${lit ? "is-lit" : ""}`}
                     style={{ "--p": 0 }}
+                    onClick={begin}
+                    onContextMenu={(e) => e.preventDefault()}
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0, transition: { duration: 1.4, ease } }}
                 >
@@ -151,6 +119,7 @@ export default function Veil({ onOpen }) {
                         sizes="100vw"
                         alt=""
                         className="veil-img"
+                        draggable={false}
                         initial={{ scale: 1.08, opacity: 1 }}
                         animate={{ scale: 1.02 }}
                         exit={{ scale: 1.08, filter: "blur(6px) brightness(1.4)" }}
@@ -167,32 +136,18 @@ export default function Veil({ onOpen }) {
                         exit={{ opacity: 0, y: -10, transition: { duration: 0.6 } }}
                         transition={{ delay: 0.8, duration: 1.2, ease }}
                     >
-                        <img src="img/ganpati.webp" alt="" className="veil-ganesha" />
+                        <img src="img/ganpati.webp" alt="" className="veil-ganesha" draggable={false} />
 
                         <button
                             type="button"
                             className="diya-btn"
-                            aria-label="Press and hold to light the diya and begin A Wedding By The Bay"
-                            onPointerDown={press}
-                            onPointerUp={release}
-                            onPointerLeave={release}
-                            onPointerCancel={release}
-                            onKeyDown={onKey}
-                            onKeyUp={onKeyUp}
-                            onContextMenu={(e) => e.preventDefault()}
-                            onTouchEnd={resumeAudio}
-                            onClick={resumeAudio}
+                            aria-label="Tap to light the diya and begin A Wedding By The Bay"
                         >
-                            <svg className="diya-ring" viewBox="0 0 100 100" aria-hidden="true">
-                                <circle cx="50" cy="50" r="46" className="ring-track" />
-                                <circle cx="50" cy="50" r="46" className="ring-fill" pathLength="1" />
-                            </svg>
                             <Diya />
                         </button>
 
-                        <span className="caps veil-caps">{lit ? "Shubh Aarambh" : "Press & hold the diya"}</span>
+                        <span className="caps veil-caps">{lit ? "Shubh Aarambh" : "Tap the diya to begin"}</span>
                         <span className="veil-script">A Wedding By The Bay</span>
-                        <span className={`veil-hint ${hint && !lit ? "show" : ""}`}>Keep holding to light it</span>
                     </motion.div>
                 </motion.div>
             )}
