@@ -17,7 +17,7 @@ let hiddenPaused = false;
 const listeners = new Set();
 const emit = () => listeners.forEach((fn) => fn(isPlaying()));
 
-export const isPlaying = () => started && !muted;
+export const isPlaying = () => started && !muted && !!ctx && ctx.state === "running";
 export const subscribe = (fn) => {
     listeners.add(fn);
     return () => listeners.delete(fn);
@@ -110,9 +110,22 @@ export function start() {
     master.connect(ctx.destination);
     ctx.resume();
     started = true;
+    ctx.onstatechange = emit;
     TRACKS.forEach((t) => loadAndLoop(t).catch(() => {}));
     fadeTo(1, 3);
     emit();
+
+    // Safety net: iPhones only allow sound from a finished touch. If the first attempt was
+    // refused, the guest's next tap or touch anywhere on the page turns the music on.
+    const retry = () => {
+        if (!ctx) return;
+        if (ctx.state === "running") {
+            ["touchend", "click", "keydown"].forEach((ev) => document.removeEventListener(ev, retry, true));
+            return;
+        }
+        resume();
+    };
+    ["touchend", "click", "keydown"].forEach((ev) => document.addEventListener(ev, retry, true));
 
     document.addEventListener("visibilitychange", () => {
         if (!ctx) return;
@@ -133,6 +146,11 @@ export function start() {
 export function toggle() {
     if (!started) {
         start();
+        return;
+    }
+    // Not muted but the phone held the sound back: this tap turns it on instead of muting.
+    if (!muted && ctx.state !== "running") {
+        resume();
         return;
     }
     muted = !muted;
