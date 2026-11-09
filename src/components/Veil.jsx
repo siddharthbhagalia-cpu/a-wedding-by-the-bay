@@ -107,7 +107,6 @@ export default function Veil({ onOpen }) {
 
     const press = (e) => {
         if (lit) return;
-        e.preventDefault?.();
         startAudio();
         // unlock the Setting video inside a real touch, so iPhones let it autoplay later
         window.dispatchEvent(new Event("wbb:unlock"));
@@ -181,6 +180,8 @@ export default function Veil({ onOpen }) {
                             onKeyDown={onKey}
                             onKeyUp={onKeyUp}
                             onContextMenu={(e) => e.preventDefault()}
+                            onTouchEnd={resumeAudio}
+                            onClick={resumeAudio}
                         >
                             <svg className="diya-ring" viewBox="0 0 100 100" aria-hidden="true">
                                 <circle cx="50" cy="50" r="46" className="ring-track" />
