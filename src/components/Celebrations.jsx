@@ -45,7 +45,7 @@ function EventCard({ ev, index }) {
                             <span className="caps fam-rel">{ev.families.bride.rel}</span>
                             <span className="fam-parents">{ev.families.bride.parents}</span>
                         </div>
-                        <span className="fam-amp">&amp;</span>
+                        <span className="fam-amp">weds</span>
                         <div className="fam">
                             <span className="fam-name">{ev.families.groom.name}</span>
                             <span className="caps fam-rel">{ev.families.groom.rel}</span>

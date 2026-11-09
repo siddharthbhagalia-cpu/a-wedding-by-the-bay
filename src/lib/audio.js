@@ -146,3 +146,10 @@ export function toggle() {
     }
     emit();
 }
+
+// Re-assert playback inside a later user gesture (iOS only grants audio on touch end).
+export function resume() {
+    if (!ctx || muted) return;
+    unlockEl?.play().catch(() => {});
+    ctx.resume();
+}

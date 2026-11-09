@@ -40,7 +40,7 @@ export const celebrations = {
             name: "The Haldi",
             when: "1st Feb, 2027",
             time: "5:00 PM",
-            venue: "Sagar Sawali Beach Resort Lawn, Ladghar",
+            venue: "Poolside, Sagar Sawali Beach Resort, Ladghar",
             text: "A little sunshine, a whole lot of haldi, and all the happy chaos that comes along.",
             image: "img/haldi-900.webp",
             accent: "#E9A23B",
@@ -130,4 +130,12 @@ export const rsvp = {
         title: "We've saved you a seat by the sea.",
         text: "Thank you — your RSVP is in. We can't wait to celebrate with you in Dapoli.",
     },
+};
+
+export const closing = {
+    eyebrow: "Counting down to the bay",
+    note: "See you by the sea.",
+    families: "The Ramani & Bhagalia families",
+    during: "Today's the day! We're so glad you're here.",
+    after: "Thank you for celebrating with us by the bay.",
 };

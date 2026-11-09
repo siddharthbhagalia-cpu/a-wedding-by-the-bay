@@ -18,6 +18,7 @@ export default function App() {
         window.scrollTo(0, 0);
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         const lenis = new Lenis({ lerp: 0.075, wheelMultiplier: 0.85, touchMultiplier: 1.1, anchors: { offset: 0, duration: 2.4 } });
+        window.__lenis = lenis;
         let id;
         const raf = (t) => {
             lenis.raf(t);
@@ -27,6 +28,7 @@ export default function App() {
         return () => {
             cancelAnimationFrame(id);
             lenis.destroy();
+            window.__lenis = undefined;
         };
     }, []);
 

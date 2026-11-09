@@ -88,7 +88,6 @@ a {
     border: 0;
     padding: 0;
     margin: 0;
-    cursor: pointer;
     background: linear-gradient(180deg, #d9bc9a 0%, #e0c0a0 45%, #b9a796 62%, #8c8a86 100%);
     overflow: hidden;
     display: grid;
@@ -125,9 +124,20 @@ a {
     margin-bottom: 18px;
 }
 .veil-caps {
-    font-size: 0.78rem;
-    letter-spacing: 0.42em;
-    margin-right: -0.42em;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    margin-right: -0.32em;
+    color: #fff3d6;
+    text-shadow: 0 0 12px rgba(255, 196, 110, 0.85), 0 2px 10px rgba(16, 44, 57, 0.85);
+}
+/* the prompt gently pulses until the guest starts holding */
+.veil:not(.is-lit) .veil-caps {
+    animation: prompt-pulse 2.2s ease-in-out infinite;
+}
+@keyframes prompt-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; text-shadow: 0 0 18px rgba(255, 206, 120, 1), 0 2px 10px rgba(16, 44, 57, 0.85); }
 }
 .veil-script {
     /* same face as the event titles (e.g. The Sundowner) */
@@ -141,39 +151,118 @@ a {
     color: var(--gold-soft);
     margin-top: 8px;
 }
-.veil-ring {
-    margin-top: 22px;
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    border: 1px solid rgba(228, 199, 142, 0.7);
+/* ── the diya: press and hold to light ── */
+.diya-btn {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    margin: 4px 0 18px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     display: grid;
     place-items: center;
-    position: relative;
+    transform: scale(calc(1 + var(--p) * 0.06));
 }
-.veil-ring::after {
+.diya-btn:focus-visible {
+    outline: 2px solid var(--gold-soft);
+    outline-offset: 6px;
+    border-radius: 50%;
+}
+.diya {
+    width: 100px;
+    height: 100px;
+    overflow: visible;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+}
+/* flame: a tiny ember at rest, catching and growing as --p rises */
+.diya-flame {
+    transform-box: view-box;
+    transform-origin: 62px 70px;
+    transform: scale(calc(0.12 + var(--p) * 0.88));
+    opacity: calc(0.35 + var(--p) * 0.65);
+    filter: drop-shadow(0 0 calc(2px + var(--p) * 14px) rgba(255, 190, 80, 0.95));
+}
+.is-lit .diya-flame {
+    transform: scale(1.12);
+    opacity: 1;
+    animation: flicker 0.22s ease-in-out infinite alternate;
+}
+@keyframes flicker {
+    from { transform: scale(1.08) skewX(-2deg); }
+    to { transform: scale(1.16) skewX(2deg); }
+}
+/* a soft halo that breathes behind the diya, brightening with the flame */
+.diya-btn::before {
     content: "";
     position: absolute;
-    inset: -1px;
+    inset: -30%;
     border-radius: 50%;
-    border: 1px solid var(--gold-soft);
-    animation: ring 2.4s var(--ease) infinite;
+    background: radial-gradient(circle, rgba(255, 214, 130, 0.75) 0%, rgba(255, 190, 90, 0.25) 35%, rgba(255, 190, 90, 0) 62%);
+    opacity: calc(0.25 + var(--p) * 0.75);
+    animation: halo 3.2s ease-in-out infinite;
+    pointer-events: none;
 }
-.veil-ring span {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--gold-soft);
+/* gold progress ring */
+.diya-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
 }
-@keyframes ring {
-    from {
-        transform: scale(1);
-        opacity: 0.9;
-    }
-    to {
-        transform: scale(1.9);
-        opacity: 0;
-    }
+.ring-track {
+    fill: none;
+    stroke: rgba(228, 199, 142, 0.35);
+    stroke-width: 1.2;
+}
+.ring-fill {
+    fill: none;
+    stroke: var(--gold-soft);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: calc(1 - var(--p));
+    filter: drop-shadow(0 0 4px rgba(255, 214, 130, 0.9));
+}
+.is-lit .diya-ring {
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+/* the warm light that floods the screen once lit */
+.veil-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 72%, rgba(255, 236, 190, 0.95) 0%, rgba(255, 196, 110, 0.6) 22%, rgba(255, 170, 80, 0.15) 45%, rgba(255, 170, 80, 0) 65%);
+    opacity: calc(var(--p) * 0.35);
+    transform: scale(calc(0.6 + var(--p) * 0.25));
+    transform-origin: 50% 72%;
+}
+.is-lit .veil-glow {
+    opacity: 1;
+    transform: scale(3.2);
+    transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s;
+}
+.veil-hint {
+    margin-top: 10px;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--gold-soft);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s, transform 0.4s;
+}
+.veil-hint.show {
+    opacity: 1;
+    transform: none;
 }
 
 /* ─────────────── Hero ─────────────── */
@@ -245,15 +334,115 @@ a {
     color: var(--coral-deep);
     line-height: 1.2;
 }
+/* names: letter-by-letter reveal with a recurring gold shimmer */
+.hero-name {
+    position: relative;
+    display: inline-block;
+}
+.name-letters {
+    display: inline-block;
+}
+.name-letter {
+    display: inline-block;
+}
+.name-shine {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    color: transparent;
+    text-shadow: none;
+    background: linear-gradient(105deg, transparent 0%, transparent 38%, rgba(255, 236, 186, 0.95) 48%, #fff7df 50%, rgba(255, 236, 186, 0.95) 52%, transparent 62%, transparent 100%);
+    background-size: 250% 100%;
+    background-position: 140% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: name-shine 7s ease-in-out infinite;
+    animation-delay: var(--shine-delay, 3s);
+}
+@keyframes name-shine {
+    0% { background-position: 140% 0; }
+    28%, 100% { background-position: -40% 0; }
+}
+
+/* Ganesha with a softly breathing golden halo */
+.ganesha-wrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    margin-bottom: 1.6svh;
+}
+.ganesha-wrap .hero-ganesha {
+    position: relative;
+    margin-bottom: 0;
+}
+.ganesha-halo {
+    position: absolute;
+    width: 230%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 253, 240, 0.98) 0%, rgba(255, 238, 190, 0.7) 30%, rgba(255, 220, 150, 0.25) 52%, rgba(255, 220, 150, 0) 70%);
+    animation: halo 4.5s ease-in-out infinite;
+}
+@keyframes halo {
+    0%, 100% { transform: scale(0.88); opacity: 0.75; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+/* a gold rule that draws itself between the names and the date */
+.hero-rule {
+    width: clamp(170px, 50vw, 240px);
+    height: auto;
+    margin-top: 2svh;
+    overflow: visible;
+    filter: drop-shadow(0 1px 6px rgba(255, 249, 238, 0.9));
+}
+
+/* date and place on a soft frosted ribbon so they read over the bright sunset */
+.hero-when {
+    margin-top: 1.2svh;
+    /* a soft cream glow around the letters keeps them legible over the sunset */
+    text-shadow:
+        0 0 2px rgba(255, 250, 240, 1),
+        0 0 10px rgba(255, 249, 236, 0.95),
+        0 0 22px rgba(255, 246, 228, 0.9),
+        0 0 36px rgba(255, 244, 222, 0.7);
+}
 .hero-date {
-    margin: 2.2svh 0 0;
+    margin: 0;
     font-style: italic;
-    font-size: clamp(1.2rem, 5vw, 1.7rem);
+    font-weight: 600;
+    font-size: clamp(1.3rem, 5.6vw, 1.85rem);
+    line-height: 1.2;
+    color: var(--rose-ink);
 }
 .hero-place {
-    margin: 0.8svh 0 0;
-    font-size: 0.72rem;
-    letter-spacing: 0.36em;
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    margin-right: -0.34em;
+    color: var(--sea-ink);
+}
+
+/* sunlight glinting on the sea */
+.glints {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+}
+.glints span {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff8e4;
+    box-shadow: 0 0 6px 2px rgba(255, 240, 200, 0.9), 0 0 14px 4px rgba(255, 220, 150, 0.45);
+    opacity: 0;
+    animation: glint ease-in-out infinite;
+}
+@keyframes glint {
+    0%, 100% { opacity: 0; transform: scale(0.4); }
+    45% { opacity: 1; transform: scale(1); }
+    60% { opacity: 0.2; transform: scale(0.7); }
 }
 .scroll-cue {
     position: absolute;
@@ -264,7 +453,8 @@ a {
     color: var(--sand);
     text-align: center;
 }
-.scroll-cue > div {
+.scroll-cue > div,
+.scroll-cue > button {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -292,6 +482,25 @@ a {
     50% {
         transform: translateY(5px);
     }
+}
+/* the invitation's scroll cue sits over the base of the arch, above the lotus */
+.invite-cue {
+    bottom: calc(3svh + env(safe-area-inset-bottom));
+    transform: none;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+.invite-cue > button {
+    pointer-events: auto;
+}
+.scroll-cue > button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 .hero-fade {
     position: absolute;
@@ -390,12 +599,11 @@ a {
 }
 .unroll {
     position: relative;
-    height: 360svh;
+    height: 100svh;
     background: radial-gradient(ellipse at 50% 35%, var(--sea-2), var(--sea) 75%);
 }
 .unroll-stage {
-    position: sticky;
-    top: 0;
+    position: relative;
     height: 100svh;
     display: grid;
     place-items: center;
@@ -941,10 +1149,11 @@ a {
     color: var(--ink-soft);
 }
 .fam-amp {
-    font-family: var(--script);
-    font-size: 2rem;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.25rem;
     color: var(--gold);
-    padding-top: 2px;
+    padding-top: 8px;
 }
 .event .btn-ghost {
     color: var(--sea-ink);
@@ -1066,9 +1275,57 @@ a {
     padding: 8px 4px 12px;
 }
 .swipe-hint {
-    text-align: center;
-    color: var(--ink-soft);
-    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px auto 0;
+    padding: 12px 22px 12px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--gold);
+    background: var(--sea);
+    color: var(--sand);
+    cursor: pointer;
+    box-shadow: 0 12px 26px -12px rgba(20, 57, 74, 0.7);
+    animation: swipe-glow 2.6s ease-in-out infinite;
+}
+.swipe-hint .caps {
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    color: var(--gold-soft);
+}
+.swipe-hand {
+    width: 20px;
+    height: 20px;
+    color: var(--sand);
+    display: inline-block;
+    animation: swipe-hand 1.8s ease-in-out infinite;
+}
+.swipe-arrow {
+    font-family: var(--sans);
+    font-size: 1.1rem;
+    color: var(--sand);
+    animation: swipe-arrow 1.8s ease-in-out infinite;
+}
+/* same pill, used as a link (Open in Google Maps) */
+.cta-pill {
+    width: fit-content;
+    text-decoration: none;
+}
+.cta-pin {
+    animation: none;
+    color: var(--gold-soft);
+}
+@keyframes swipe-hand {
+    0%, 100% { transform: translateX(4px) rotate(10deg); }
+    50% { transform: translateX(-6px) rotate(-6deg); }
+}
+@keyframes swipe-arrow {
+    0%, 100% { transform: translateX(0); opacity: 0.6; }
+    50% { transform: translateX(6px); opacity: 1; }
+}
+@keyframes swipe-glow {
+    0%, 100% { box-shadow: 0 12px 26px -12px rgba(20, 57, 74, 0.7); }
+    50% { box-shadow: 0 12px 30px -10px rgba(195, 149, 80, 0.75); }
 }
 
 /* ─────────────── Getaway ─────────────── */
@@ -1309,13 +1566,12 @@ a {
 /* ─────────────── Closing ─────────────── */
 .closing {
     position: relative;
-    min-height: 92svh;
+    min-height: 100svh;
     display: grid;
     place-items: center;
     overflow: hidden;
     color: var(--rose-ink);
     text-align: center;
-    place-items: start center;
 }
 .closing-img {
     position: absolute;
@@ -1323,51 +1579,103 @@ a {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 60%;
+    object-position: 50% 55%;
 }
 .closing-shade {
-    /* melt in from the sea-blue RSVP above, then a soft sunlit wash behind the words */
+    /* a soft sunlit wash behind the words; no dark band */
     position: absolute;
     inset: 0;
-    background:
-        linear-gradient(to bottom, var(--sea) 0%, rgba(20, 57, 74, 0) 14%),
-        linear-gradient(to bottom, rgba(253, 244, 230, 0) 12%, rgba(253, 244, 230, 0.78) 26%, rgba(253, 244, 230, 0.55) 46%, rgba(253, 244, 230, 0) 62%);
+    background: radial-gradient(ellipse 85% 46% at 50% 54%, rgba(253, 246, 234, 0.86) 0%, rgba(253, 246, 234, 0.6) 55%, rgba(253, 246, 234, 0) 100%);
 }
 .closing-copy {
     position: relative;
     z-index: 6;
-    padding: 0 var(--gutter);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 22svh;
-    text-shadow: 0 1px 16px rgba(255, 249, 238, 0.95);
+    padding: 12svh var(--gutter) 10svh;
+    margin-top: 8svh;
+    text-shadow: 0 1px 14px rgba(255, 249, 238, 0.95);
 }
 .closing .eyebrow {
     color: var(--coral-deep);
+    margin-bottom: 2.2svh;
 }
-.closing-names {
-    margin: 6px 0 0;
+.countdown {
+    display: flex;
+    gap: clamp(8px, 3vw, 22px);
+    justify-content: center;
+}
+.cd-unit {
+    min-width: clamp(62px, 18vw, 92px);
+    padding: 12px 6px 10px;
+    border-radius: 14px;
+    background: rgba(255, 251, 243, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(195, 149, 80, 0.6), 0 10px 24px -14px rgba(91, 58, 46, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-shadow: none;
+}
+.cd-num {
+    font-weight: 500;
+    font-size: clamp(1.9rem, 8.5vw, 3rem);
+    line-height: 1;
+    color: var(--sea-ink);
+    font-variant-numeric: tabular-nums lining-nums;
+}
+.cd-label {
+    font-size: 0.56rem;
+    letter-spacing: 0.2em;
+    margin-right: -0.2em;
+    color: var(--coral-deep);
+}
+.cd-message {
+    margin: 0;
+    font-style: italic;
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
+    color: var(--sea-ink);
+    max-width: 16em;
+}
+.closing-rule {
+    width: clamp(160px, 46vw, 230px);
+    height: auto;
+    margin: 3.4svh auto 2.4svh;
+    display: block;
+}
+.closing-note {
+    margin: 0;
     font-style: italic;
     font-weight: 500;
-    font-size: clamp(2.8rem, 12vw, 5.4rem);
-    line-height: 1;
-}
-.closing-names span {
-    font-family: var(--script);
-    font-style: normal;
-    color: var(--coral-deep);
-    font-size: 0.7em;
-}
-.closing-date {
-    margin: 18px 0 30px;
+    font-size: clamp(2rem, 9vw, 3.4rem);
+    line-height: 1.1;
     color: var(--sea-ink);
 }
-.closing .btn-ghost {
-    color: var(--sand);
-    border-color: var(--gold-soft);
-    background: rgba(20, 57, 74, 0.35);
-    backdrop-filter: blur(6px);
+.closing-sign {
+    margin-top: 2.6svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.closing-sign .caps {
+    color: var(--coral-deep);
+    font-size: 0.66rem;
+}
+.closing-names {
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.7rem, 7.4vw, 2.6rem);
+    line-height: 1.1;
+}
+.closing-names em {
+    color: var(--coral-deep);
+}
+.closing-families {
+    font-style: italic;
+    font-size: clamp(1.05rem, 4.4vw, 1.3rem);
+    color: var(--ink-soft);
 }
 
 /* ─────────────── Floating controls ─────────────── */
@@ -1457,6 +1765,9 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .name-shine,
+    .ganesha-halo,
+    .glints,
     .pk-head,
     .pk-train,
     .pk-crest,
@@ -1477,4 +1788,25 @@ a {
         height: auto;
         min-height: 100svh;
     }
+}
+
+/* once the diya is lit the screen turns golden: keep the words legible */
+.veil .veil-caps,
+.veil .veil-script {
+    transition: color 0.8s;
+}
+.is-lit .veil-caps {
+    color: var(--coral-deep);
+}
+.is-lit .veil-script {
+    color: var(--rose-ink);
+}
+
+/* never show the browser's own play button on the resort video */
+.setting-video::-webkit-media-controls,
+.setting-video::-webkit-media-controls-start-playback-button,
+.setting-video::-webkit-media-controls-overlay-play-button {
+    display: none !important;
+    -webkit-appearance: none;
+    opacity: 0 !important;
 }

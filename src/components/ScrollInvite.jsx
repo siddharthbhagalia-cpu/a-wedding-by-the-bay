@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useReducedMotion, useMotionValue, useMotionValueEvent } from "framer-motion";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { LotusCluster } from "./Flowers";
+import { Chevrons } from "./Ornaments";
+import { glideTo } from "../lib/scroll";
 import { Sprig } from "./Hero";
 import { couple, invite, celebrations } from "../content";
 
@@ -40,15 +42,18 @@ function archPath(H, d = 0) {
     ].join(" ");
 }
 
-// A line that writes itself in over a slice of scroll.
-function Line({ progress, at, children, className = "", as = "div" }) {
-    const span = 0.07;
-    const o = useTransform(progress, [at, at + span], [0, 1]);
-    const y = useTransform(progress, [at, at + span], [14, 0]);
-    const blur = useTransform(progress, [at, at + span], ["blur(4px)", "blur(0px)"]);
+const ease = [0.22, 1, 0.36, 1];
+
+// A line that fades and rises in on its own once the curtain has opened.
+function Line({ show, delay = 0, children, className = "", as = "div" }) {
     const M = motion[as];
     return (
-        <M className={className} style={{ opacity: o, y, filter: blur }}>
+        <M
+            className={className}
+            initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
+            animate={show ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+            transition={{ duration: 1.1, delay, ease }}
+        >
             {children}
         </M>
     );
@@ -123,30 +128,14 @@ export default function ScrollInvite() {
         return () => ro.disconnect();
     }, []);
 
-    const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-    const done = useMotionValue(1);
-    const p = reduce ? done : scrollYProgress;
-
-    const cloth = useTransform(scrollYProgress, [0.04, 0.32], [1, 0]);
-    const rollO = useTransform(scrollYProgress, [0.29, 0.34], [1, 0]);
-    const frameScale = useTransform(scrollYProgress, [0, 0.06], [0.96, 1]);
-
-    // SVG attributes are set directly so the cloth really shortens from the bottom.
-    const clothRef = useRef(null);
-    const rollRef = useRef(null);
-    const hRef = useRef(H);
-    hRef.current = H;
-    const paintCloth = (v) => {
-        const bottom = hRef.current - 3;
-        clothRef.current?.setAttribute("height", String(Math.max(0, bottom * v)));
-        rollRef.current?.setAttribute("y", String(bottom * v - 2.5));
-    };
-    useMotionValueEvent(cloth, "change", paintCloth);
-    useEffect(() => paintCloth(cloth.get()), [H]);
+    // Open the curtain once most of the arch is on screen, then reveal the text in sequence.
+    const seen = useInView(frameRef, { amount: 0.55, once: true });
+    const open = reduce || seen;
+    const T0 = reduce ? 0 : 1.55; // text begins as the curtain finishes parting
 
     const outer = archPath(H, 0);
     const inner = archPath(H, 6.2);
-    const t = (i) => 0.33 + i * 0.04;
+    const t = (i) => T0 + i * 0.26;
 
     return (
         <section ref={ref} className="unroll" aria-label="The invitation">
@@ -157,7 +146,13 @@ export default function ScrollInvite() {
                 <Lantern side="l" drop="30%" />
                 <Lantern side="r" drop="24%" />
 
-                <motion.div ref={frameRef} className="arch-frame" style={{ scale: reduce ? 1 : frameScale }}>
+                <motion.div
+                    ref={frameRef}
+                    className="arch-frame"
+                    initial={{ scale: 0.96 }}
+                    animate={open ? { scale: 1 } : {}}
+                    transition={{ duration: 2.2, ease }}
+                >
                     <svg className="arch-svg" viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" aria-hidden="true">
                         <defs>
                             <radialGradient id="parch" cx="50%" cy="40%" r="75%">
@@ -169,37 +164,37 @@ export default function ScrollInvite() {
                         <path d={outer} fill="url(#parch)" />
                     </svg>
 
-                    <Line progress={p} at={t(0)} className="arch-crown">
+                    <Line show={open} delay={t(0)} className="arch-crown">
                         <img src="img/ganesha-gold.webp" alt="Lord Ganesha" className="arch-ganesha" />
                     </Line>
 
                     <div className="arch-copy">
                         <div className="arch-group">
-                            <Line progress={p} at={t(1)} as="h2" className="arch-title">
+                            <Line show={open} delay={t(1)} as="h2" className="arch-title">
                                 {invite.title}
                             </Line>
-                            <Line progress={p} at={t(2)} as="p" className="arch-blessing">
+                            <Line show={open} delay={t(2)} as="p" className="arch-blessing">
                                 {invite.blessing}
                             </Line>
                         </div>
 
                         <div className="arch-group">
-                            <Line progress={p} at={t(3)}>
+                            <Line show={open} delay={t(3)}>
                                 <Ornament className="arch-orn" />
                             </Line>
-                            <Line progress={p} at={t(4)} className="arch-names">
+                            <Line show={open} delay={t(4)} className="arch-names">
                                 <span>
                                     {couple.bride} <em>&amp;</em>
                                 </span>
                                 <span>{couple.groom}</span>
                             </Line>
-                            <Line progress={p} at={t(5.2)}>
+                            <Line show={open} delay={t(5.2)}>
                                 <Ornament className="arch-orn" />
                             </Line>
                         </div>
 
                         {families && (
-                            <Line progress={p} at={t(6)} className="arch-group arch-parents">
+                            <Line show={open} delay={t(6)} className="arch-group arch-parents">
                                 <p>
                                     {families.bride.rel} {families.bride.parents.replace(" and ", " & ")}
                                 </p>
@@ -210,17 +205,17 @@ export default function ScrollInvite() {
                         )}
 
                         <div className="arch-group">
-                            <Line progress={p} at={t(7.4)} as="p" className="arch-date">
+                            <Line show={open} delay={t(7.4)} as="p" className="arch-date">
                                 1<sup>st</sup> &amp; 2<sup>nd</sup> February 2027
                             </Line>
-                            <Line progress={p} at={t(8.2)} as="p" className="arch-place">
+                            <Line show={open} delay={t(8.2)} as="p" className="arch-place">
                                 {couple.place}
                             </Line>
                         </div>
 
                         <div className="arch-group">
                             {invite.lines.map((l, i) => (
-                                <Line key={l} progress={p} at={t(9.2 + i * 0.9)} as="p" className={i ? "arch-love" : "arch-line"}>
+                                <Line key={l} show={open} delay={t(9.2 + i * 0.9)} as="p" className={i ? "arch-love" : "arch-line"}>
                                     {l}
                                 </Line>
                             ))}
@@ -261,8 +256,29 @@ export default function ScrollInvite() {
 
                         {!reduce && (
                             <g clipPath="url(#arch-clip)">
-                                <rect ref={clothRef} x="0" y="0" width="100" height={H - 3} fill="url(#folds)" />
-                                <motion.rect ref={rollRef} x="-2" y={H - 5.5} width="104" height="5" rx="2.5" fill="url(#roll-g)" style={{ opacity: rollO }} />
+                                {/* one curtain that lifts from the bottom, gathering up into the crown */}
+                                <motion.g
+                                    style={{ originX: 0.5, originY: 0 }}
+                                    initial={{ scaleY: 1, opacity: 1 }}
+                                    animate={open ? { scaleY: 0.05, opacity: 0 } : {}}
+                                    transition={{
+                                        scaleY: { duration: 2, delay: 0.25, ease: [0.65, 0, 0.35, 1] },
+                                        opacity: { duration: 0.6, delay: 1.85 },
+                                    }}
+                                >
+                                    <rect x="0" y="-6" width="100" height={H + 6} fill="url(#folds)" />
+                                    {/* scalloped gold-fringed hem */}
+                                    <path
+                                        d={`M0 ${H - 6} ${Array.from({ length: 10 }, (_, i) => `Q${i * 10 + 5} ${H - 2} ${i * 10 + 10} ${H - 6}`).join(" ")} V${H + 6} H0Z`}
+                                        fill="#163e4e"
+                                    />
+                                    <path
+                                        d={`M0 ${H - 6} ${Array.from({ length: 10 }, (_, i) => `Q${i * 10 + 5} ${H - 2} ${i * 10 + 10} ${H - 6}`).join(" ")}`}
+                                        fill="none"
+                                        stroke="#e8c983"
+                                        strokeWidth=".9"
+                                    />
+                                </motion.g>
                             </g>
                         )}
 
@@ -293,6 +309,19 @@ export default function ScrollInvite() {
 
                     <LotusCluster side="l" />
                     <LotusCluster side="r" />
+                </motion.div>
+
+                {/* scroll cue, shown once the invitation has finished revealing */}
+                <motion.div
+                    className="scroll-cue invite-cue"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={open ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 1, delay: reduce ? 0 : t(12), ease }}
+                >
+                    <button type="button" onClick={() => glideTo("#celebrations .section-head", 28)} aria-label="Scroll to the celebrations">
+                        <span className="caps">Scroll</span>
+                        <Chevrons className="cue-chev" />
+                    </button>
                 </motion.div>
             </div>
         </section>

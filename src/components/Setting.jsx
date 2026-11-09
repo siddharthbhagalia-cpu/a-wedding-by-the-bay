@@ -83,8 +83,12 @@ export function Setting() {
                 </motion.figure>
             </div>
             <Reveal className="center">
-                <a className="btn-ghost dark" href={setting.map} target="_blank" rel="noreferrer">
-                    <Pin className="pin" /> Open in Google Maps
+                <a className="swipe-hint cta-pill" href={setting.map} target="_blank" rel="noreferrer">
+                    <Pin className="swipe-hand cta-pin" />
+                    <span className="caps">Open in Google Maps</span>
+                    <span className="swipe-arrow" aria-hidden="true">
+                        →
+                    </span>
                 </a>
             </Reveal>
         </section>
@@ -92,6 +96,16 @@ export function Setting() {
 }
 
 export function Gallery() {
+    const rowRef = useRef(null);
+    // Tapping the hint moves the row along by one photo (and back to the start at the end).
+    const nextPhoto = () => {
+        const row = rowRef.current;
+        if (!row) return;
+        const card = row.querySelector(".polaroid");
+        const step = card ? card.getBoundingClientRect().width + 22 : row.clientWidth * 0.8;
+        const atEnd = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
+        row.scrollTo({ left: atEnd ? 0 : row.scrollLeft + step, behavior: "smooth" });
+    };
     return (
         <section className="gallery" id="gallery">
             <header className="section-head">
@@ -102,7 +116,7 @@ export function Gallery() {
                     {gallery.intro}
                 </Reveal>
             </header>
-            <div className="polaroids" tabIndex={0} aria-label="Photo gallery, swipe to see more">
+            <div ref={rowRef} className="polaroids" tabIndex={0} aria-label="Photo gallery, swipe to see more">
                 {gallery.photos.map((ph, i) => (
                     <motion.figure
                         key={ph.src + i}
@@ -118,7 +132,15 @@ export function Gallery() {
                     </motion.figure>
                 ))}
             </div>
-            <p className="caps swipe-hint">Swipe →</p>
+            <button type="button" className="swipe-hint" onClick={nextPhoto}>
+                <svg className="swipe-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11" />
+                    <path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2" />
+                    <path d="M15 10.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.6a5 5 0 0 1-4.2-2.3L4.6 14a1.5 1.5 0 0 1 2.4-1.8L9 14" />
+                </svg>
+                <span className="caps">Swipe to see more photos</span>
+                <span className="swipe-arrow" aria-hidden="true">→</span>
+            </button>
         </section>
     );
 }
