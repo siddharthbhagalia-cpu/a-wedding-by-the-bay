@@ -1645,21 +1645,21 @@ a {
     max-width: 16em;
 }
 .closing-rule {
-    width: clamp(160px, 46vw, 230px);
+    width: clamp(180px, 52vw, 260px);
     height: auto;
-    margin: 3.4svh auto 2.4svh;
+    margin: 0 auto 3svh;
     display: block;
 }
 .closing-note {
     margin: 0;
     font-style: italic;
     font-weight: 500;
-    font-size: clamp(2rem, 9vw, 3.4rem);
-    line-height: 1.1;
+    font-size: clamp(2.8rem, 12.5vw, 4.6rem);
+    line-height: 1.05;
     color: var(--sea-ink);
 }
 .closing-sign {
-    margin-top: 2.6svh;
+    margin-top: 4svh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1667,12 +1667,12 @@ a {
 }
 .closing-sign .caps {
     color: var(--coral-deep);
-    font-size: 0.66rem;
+    font-size: 0.82rem;
 }
 .closing-names {
     font-style: italic;
     font-weight: 500;
-    font-size: clamp(1.7rem, 7.4vw, 2.6rem);
+    font-size: clamp(2.3rem, 10vw, 3.4rem);
     line-height: 1.1;
 }
 .closing-names em {
@@ -1680,7 +1680,7 @@ a {
 }
 .closing-families {
     font-style: italic;
-    font-size: clamp(1.05rem, 4.4vw, 1.3rem);
+    font-size: clamp(1.3rem, 5.6vw, 1.7rem);
     color: var(--ink-soft);
 }
 
