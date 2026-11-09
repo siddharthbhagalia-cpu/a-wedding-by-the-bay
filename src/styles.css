@@ -161,7 +161,7 @@ a {
     border: 0;
     background: none;
     cursor: pointer;
-    touch-action: none;
+    touch-action: manipulation;
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
@@ -238,17 +238,23 @@ a {
 }
 /* the warm light that floods the screen once lit */
 .veil-glow {
+    /* a big circle centred on the diya that fades to nothing before its own edge,
+       so it never shows a hard border as it grows */
     position: absolute;
-    inset: 0;
+    left: 50%;
+    top: 72%;
+    width: 150vmax;
+    height: 150vmax;
+    margin: -75vmax 0 0 -75vmax;
+    border-radius: 50%;
     pointer-events: none;
-    background: radial-gradient(circle at 50% 72%, rgba(255, 236, 190, 0.95) 0%, rgba(255, 196, 110, 0.6) 22%, rgba(255, 170, 80, 0.15) 45%, rgba(255, 170, 80, 0) 65%);
-    opacity: calc(var(--p) * 0.35);
-    transform: scale(calc(0.6 + var(--p) * 0.25));
-    transform-origin: 50% 72%;
+    background: radial-gradient(circle closest-side, rgba(255, 236, 190, 0.95) 0%, rgba(255, 196, 110, 0.6) 30%, rgba(255, 170, 80, 0.18) 60%, rgba(255, 170, 80, 0) 100%);
+    opacity: calc(var(--p) * 0.4);
+    transform: scale(calc(0.25 + var(--p) * 0.25));
 }
 .is-lit .veil-glow {
     opacity: 1;
-    transform: scale(3.2);
+    transform: scale(2.4);
     transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s;
 }
 .veil-hint {
@@ -1809,4 +1815,20 @@ a {
     display: none !important;
     -webkit-appearance: none;
     opacity: 0 !important;
+}
+
+/* the whole opening screen is the hold target: no long-press image menu, no text selection */
+.veil {
+    touch-action: manipulation;
+    cursor: pointer;
+}
+.veil,
+.veil * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.veil img {
+    pointer-events: none;
 }
