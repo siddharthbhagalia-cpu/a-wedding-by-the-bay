@@ -38,7 +38,7 @@ export const celebrations = {
         {
             slug: "haldi",
             name: "The Haldi",
-            when: "1st Feb, 2027",
+            when: "Monday, 1st Feb, 2027",
             time: "5:00 PM",
             venue: "Poolside, Sagar Sawali Beach Resort, Ladghar",
             text: "A little sunshine, a whole lot of haldi, and all the happy chaos that comes along.",
@@ -49,7 +49,7 @@ export const celebrations = {
         {
             slug: "sundowner",
             name: "The Sundowner",
-            when: "1st Feb, 2027",
+            when: "Monday, 1st Feb, 2027",
             time: "7:00 PM",
             venue: "Sagar Sawali Beach Resort Lawn, Ladghar",
             text: "As the sun clocks out, the celebrations turn up. Expect good music, great company and a night worth staying up for.",
@@ -60,7 +60,7 @@ export const celebrations = {
         {
             slug: "wedding",
             name: "A Wedding by the Bay",
-            when: "2nd Feb, 2027",
+            when: "Tuesday, 2nd Feb, 2027",
             time: "12:00 PM",
             venue: "Sagar Sawali Beach Resort Lawn, Ladghar",
             text: "The big day, the blissful setting, and the beginning of a beautiful journey.",
